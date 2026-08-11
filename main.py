@@ -60,6 +60,12 @@ def main():
 
     db.create_tables()
 
+    tables = db.get_tables()
+
+    logger.info(
+        f"Database tables: {tables}"
+    )
+
     db.close()
 
     logger.success("Project Atlas initialized successfully")

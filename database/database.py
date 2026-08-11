@@ -9,7 +9,7 @@ Author: Adekeye Adeoye
 """
 
 import sqlite3
-
+from database.schema import CLUBS_TABLE
 from config.settings import DATABASE_FILE
 from utils.logger import get_logger
 
@@ -39,50 +39,48 @@ class Database:
             self.connection.close()
             logger.info("Database connection closed.")
     def create_tables(self):
-        """Create database tables."""
+        """Create all database tables."""
+
+        if not self.connection:
+            logger.error(
+            "Cannot create tables: database is not connected."
+            )
+            return
+
+        try:
+            cursor = self.connection.cursor()
+
+            cursor.execute(CLUBS_TABLE)
+
+            self.connection.commit()
+
+            logger.success("Database tables created.")
+
+        except sqlite3.Error as error:
+
+            self.connection.rollback()
+
+            logger.error(
+            f"Failed to create database tables: {error}"
+            )
+    def get_tables(self):
+        """Return all tables in the database."""
+
+        if not self.connection:
+            logger.error(
+            "Cannot inspect database: not connected."
+            )
+            return []
 
         cursor = self.connection.cursor()
 
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS clubs (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            team_name TEXT UNIQUE NOT NULL,
-
-            nickname TEXT,
-
-            stadium TEXT,
-
-            state TEXT,
-
-            email TEXT,
-
-            phone TEXT,
-
-            website TEXT,
-
-            facebook TEXT,
-
-            instagram TEXT,
-
-            x TEXT,
-
-            tiktok TEXT,
-
-            youtube TEXT,
-
-            founded INTEGER,
-
-            logo TEXT,
-
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-        )
+        SELECT name
+        FROM sqlite_master
+        WHERE type='table'
+        ORDER BY name;
         """)
 
-        self.connection.commit()
+        tables = cursor.fetchall()
 
-        logger.success("Database tables created.")
+        return [table[0] for table in tables]
